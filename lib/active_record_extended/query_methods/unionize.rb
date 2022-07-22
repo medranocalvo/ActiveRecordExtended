@@ -107,7 +107,7 @@ module ActiveRecordExtended
       end
 
       def union(opts = :chain, *args)
-        return UnionChain.new(spawn) if opts == :chain
+        return UnionChain.new(spawn) if chain?(opts)
 
         opts.nil? ? self : spawn.union!(opts, *args, chain_method: __callee__)
       end
@@ -121,7 +121,7 @@ module ActiveRecordExtended
       def union!(opts = :chain, *args, chain_method: :union)
         union_chain    = UnionChain.new(self)
         chain_method ||= :union
-        return union_chain if opts == :chain
+        return union_chain if chain?(opts)
 
         union_chain.public_send(chain_method, *([opts] + args))
       end
@@ -241,6 +241,15 @@ module ActiveRecordExtended
         else
           relation_node.arel
         end
+      end
+
+      # Check whether we should chain.
+      def chain?(opts) # rubocop:disable Style/YodaCondition
+        # We make sure the #== of Symbol is invoked, because opts might be an
+        # ActiveRecord::Association::CollectionProxy, whose #== method loads
+        # the query before the union (see
+        # https://api.rubyonrails.org/classes/ActiveRecord/Associations/CollectionProxy.html)
+        :chain.==(opts)
       end
     end
   end

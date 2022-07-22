@@ -113,14 +113,14 @@ module ActiveRecordExtended
 
       # @param [Hash, WithCTE] opts
       def with(opts = :chain, *rest)
-        return WithChain.new(spawn) if opts == :chain
+        return WithChain.new(spawn) if chain?(opts)
 
         opts.blank? ? self : spawn.with!(opts, *rest)
       end
 
       # @param [Hash, WithCTE] opts
       def with!(opts = :chain, *_rest)
-        return WithChain.new(self) if opts == :chain
+        return WithChain.new(self) if chain?(opts)
 
         tap do |scope|
           scope.cte ||= WithCTE.new(self)
@@ -142,6 +142,17 @@ module ActiveRecordExtended
         else
           arel.with(cte_statements)
         end
+      end
+
+      private
+
+      # Check whether we should chain.
+      def chain?(opts) # rubocop:disable Style/YodaCondition
+        # We make sure the #== of Symbol is invoked, because opts might be an
+        # ActiveRecord::Association::CollectionProxy, whose #== method loads
+        # the query before the union (see
+        # https://api.rubyonrails.org/classes/ActiveRecord/Associations/CollectionProxy.html)
+        :chain.==(opts)
       end
     end
   end
