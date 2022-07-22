@@ -57,6 +57,14 @@ RSpec.describe "Active Record Union Methods" do
         expect(base_query.to_sql).to eq(other_query.to_sql)
         expect(base_query.to_a).to match_array(other_query.to_a)
       end
+
+      it "will maintain the union table when merging trivial union into existing AR queries " do
+        subquery = User.where(id: user_one.id)
+        base_query  = User.union(subquery, subquery)
+        other_query = User.merge(base_query)
+        expect(base_query.to_sql).to eq(other_query.to_sql)
+        expect(base_query.to_a).to match_array(other_query.to_a)
+      end
     end
   end
 
